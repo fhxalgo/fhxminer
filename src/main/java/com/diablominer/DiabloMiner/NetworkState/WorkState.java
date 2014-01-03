@@ -20,11 +20,10 @@ package com.diablominer.DiabloMiner.NetworkState;
 
 import com.diablominer.DiabloMiner.DeviceState.DeviceState.ExecutionState;
 import com.diablominer.DiabloMiner.DiabloMiner;
+import com.diablominer.DiabloMiner.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class WorkState {
@@ -34,7 +33,6 @@ public class WorkState {
 	public final int[] midstate = new int[8];
 	public final long[] target = new long[8];
 
-    public final DateFormat time = new SimpleDateFormat("HH:mm:ss.S");
 	long timestamp;
 	long base;
 
@@ -59,7 +57,6 @@ public class WorkState {
 		boolean getWork;
 
 		if((DiabloMiner.now() - timestamp) + 1000 >= networkState.getWorkLifetime()) {
-            log.info("XXXX timestamp: {} ", time.format(new Date(timestamp)));
 			diabloMiner.debug(executionState.getExecutionName() + ": Refresh work: work expired, workLifetime: " + networkState.getWorkLifetime());
 			getWork = true;
 		} else if(networkState.getRefreshTimestamp() > timestamp) {
@@ -81,7 +78,9 @@ public class WorkState {
 			getWork = false;
 		}
 
-		if(getWork) {
+        log.info(String.format("XXXX update() delta: %d, timestamp: %s, getWork: %s ", delta, Utils.df.format(new Date(timestamp)), getWork));
+
+        if(getWork) {
 			networkState.addGetQueue(executionState);
 			return true;
 		} else {

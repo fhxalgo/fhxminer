@@ -21,19 +21,26 @@ package com.diablominer.DiabloMiner.DeviceState;
 import com.diablominer.DiabloMiner.DiabloMiner;
 import com.diablominer.DiabloMiner.DiabloMinerFatalException;
 import com.diablominer.DiabloMiner.NetworkState.WorkState;
+import com.diablominer.DiabloMiner.Utils;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLUtil;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.opencl.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class GPUDeviceState extends DeviceState {
-	final static int OUTPUTS = 16;
+    private static final Logger log = LoggerFactory.getLogger(GPUDeviceState.class);
+
+    final static int OUTPUTS = 16;
 
 	final PlatformVersion platform_version;
 	final CLDevice device;
@@ -225,6 +232,7 @@ public class GPUDeviceState extends DeviceState {
 		}
 
 		diabloMiner.info("Added " + deviceName + " (" + deviceCU + " CU, local work size of " + localWorkSize.get(0) + ")");
+        log.info("Added " + deviceName + " (" + deviceCU + " CU, local work size of " + localWorkSize.get(0) + ")");
 
 		workSizeBase = 64 * 512;
 
@@ -289,7 +297,7 @@ public class GPUDeviceState extends DeviceState {
 		final IntBuffer errBuffer = BufferUtils.createIntBuffer(1);
 		int err;
 
-		WorkState workState;
+		//WorkState workState;
 		boolean requestedNewWork;
 
 		final int[] midstate2 = new int[16];
@@ -382,6 +390,15 @@ public class GPUDeviceState extends DeviceState {
 					skipProcessing = true;
 				}
 
+                //String wrkState = String.format("workState data: %s, timestatmp: %s", Arrays.toString(workState.getData()), Utils.df.format(new Date(workState.getTimestamp())));
+                String wrkState = String.format("workState data: %s, midstate: %s, target: %s, timestatmp: %s",
+                        workState.getData()[workState.getData().length-1],
+                        Arrays.toString(workState.getMidstate()),
+                        Arrays.toString(workState.target),
+                        Utils.df.format(new Date(workState.getTimestamp())));
+
+                log.info("$$$$ calling GPU with workState: " + wrkState);
+
 				if(!skipProcessing | !skipUnmap) {
 					for(int z = 0; z < OUTPUTS; z++) {
 						int nonce = outputBuffer.getInt(z * 4);
@@ -445,7 +462,7 @@ public class GPUDeviceState extends DeviceState {
 				}
 
 				if(!requestedNewWork) {
-                    //System.out.println("%%%% workSize.get(): " + increment);
+                    log.info("%%%% hash count: {}, runs: {} ", deviceHashCount.get(), runs.get());
 					diabloMiner.addAndGetHashCount(increment);
 					deviceHashCount.addAndGet(increment);
 					runs.incrementAndGet();

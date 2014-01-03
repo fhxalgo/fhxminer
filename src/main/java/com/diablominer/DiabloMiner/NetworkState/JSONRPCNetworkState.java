@@ -446,6 +446,7 @@ public class JSONRPCNetworkState extends NetworkState {
 
 					workState.setExecutionState(executionState);
                     // publish to disruptor
+                    log.info("GOT NEW workState for GPU processing: " + workState);
 					executionState.addIncomingQueue(workState);
 				}
 			}
@@ -505,6 +506,9 @@ public class JSONRPCNetworkState extends NetworkState {
 					refreshTimestamp.set(workState.getTimestamp());
 
 					diabloMiner.debug(queryUrl.getHost() + ": Long poll returned");
+                    log.info("Long poll queryUrl: " + queryUrl);
+                    log.info("DEBUG exiting...");
+                    System.exit(-1);
 				} catch(IOException e) {
 					diabloMiner.error("Cannot connect to " + queryUrl.getHost() + ": " + e.getLocalizedMessage());
 				}

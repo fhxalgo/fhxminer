@@ -6,6 +6,8 @@ import org.lwjgl.opencl.CL;
 import org.lwjgl.opencl.CL10;
 import org.lwjgl.opencl.CLDevice;
 import org.lwjgl.opencl.CLPlatform;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,7 +16,9 @@ import java.util.List;
 import java.util.Set;
 
 public class GPUHardwareType extends HardwareType {
-	final static int EXECUTION_TOTAL = 2;
+    private static final Logger log = LoggerFactory.getLogger(GPUHardwareType.class);
+
+    final static int EXECUTION_TOTAL = 2;
 	final static String UPPER[] = { "X", "Y", "Z", "W", "T", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "k" };
 	final static String LOWER[] = { "x", "y", "z", "w", "t", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k" };
 

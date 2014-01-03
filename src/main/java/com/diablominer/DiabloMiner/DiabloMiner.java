@@ -356,9 +356,13 @@ public class DiabloMiner {
 				hashMeter.setLength(0);
 
 				if(!debug) {
-					hashMeterFormatter.format("\rmhash: %.1f/%.1f | accept: %d | reject: %d | hw error: %d", averageHashCount, hashLongCount, blocks.get(), rejects.get(), hwErrors.get());
+					hashMeterFormatter.format("\rmhash: %.1f/%.1f | accept: %d | reject: %d | hw error: %d",
+                            averageHashCount, hashLongCount, blocks.get(), rejects.get(), hwErrors.get());
 				} else {
-                    hashMeterFormatter.format("\nmhash: %.1f/%.1f | accept: %d | reject: %d | hw error: %d", averageHashCount, hashLongCount, blocks.get(), rejects.get(), hwErrors.get());
+                    hashMeterFormatter.format("\n" +
+                            "mhash: %.1f/%.1f | accept: %d | reject: %d | hw error: %d | currentHashCount: %d, previousHashCount: %d",
+                            averageHashCount, hashLongCount, blocks.get(), rejects.get(), hwErrors.get(), currentHashCount, previousHashCount);
+
                     hashMeterFormatter.format("\nXX mh: %.1f/%.1f | a/r/hwe: %d/%d/%d | gh: ", averageHashCount, hashLongCount, blocks.get(), rejects.get(), hwErrors.get());
 
 					double basisAverage = 0.0;
@@ -375,11 +379,13 @@ public class DiabloMiner {
 					hashMeterFormatter.format("| fps: %.1f", basisAverage);
 				}
 
-				log.info("xxxx hash meter xxxxxxxxxxxxxxxxxxxxxxxxxxx");
+				log.info("xxxx hash meter BEGIN xxxxxxxxxxxxxxxxxxxxxxxxxxx: " + Utils.df.format(new Date(startTime)));
                 log.info(hashMeter.toString());
-                log.info("-------------------------------------------");
+                log.info("xxxx hash meter END -----------------------------: " + Utils.df.format(new Date(now)));
+
 			} else {
-				System.out.print("\rWaiting...");
+				//System.out.print("\rWaiting...");
+                log.info("Waiting... startTime: {}, now: {}", Utils.df.format(new Date(startTime)), Utils.df.format(new Date(now)) );
 			}
 
 			if(now() - TIME_OFFSET * 2 > previousAdjustedStartTime) {
@@ -388,7 +394,8 @@ public class DiabloMiner {
 				previousAdjustedStartTime = now - 1;
 			}
 
-			if(debugtimer && now() > startTime + 60 * 1000) {
+			//if(debugtimer && now() > startTime + 60 * 1000) {
+            if(debugtimer && now() > startTime + 20 * 1000) {
 				System.out.print("\n");
 				log.info("Debug timer is up, quitting...");
 				System.exit(0);
