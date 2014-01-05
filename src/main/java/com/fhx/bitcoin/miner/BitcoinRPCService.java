@@ -46,7 +46,7 @@ public class BitcoinRPCService extends AbstractService implements Runnable {
      */
     protected int scanCount = 0xffff;
     /** Number of second in each job. Never excess 10 minutes (GAE Limit) */
-    protected int targetTotalTime = 540;
+    protected int targetTotalTime = 60; // 540; in seconds
 
     private ExecutorService executor;
 
@@ -82,6 +82,7 @@ public class BitcoinRPCService extends AbstractService implements Runnable {
         long now = System.currentTimeMillis();
         double tp = (now - start) / 1000.0;
 
+        log.info(" timePassed: start: " + Utils.df.format(new Date(start)) + ", now: " + Utils.df.format(new Date(now)) + " diff (seconds): " + tp);
         if (tp < 0)
             tp += 86400; // midnight
 
@@ -89,8 +90,10 @@ public class BitcoinRPCService extends AbstractService implements Runnable {
     }
 
     private void adjustHashPerRound(long startRoundTime) {
+        log.info("adjusthashPerRound: " + Utils.df.format(new Date(startRoundTime)));
         double time = timePassed(startRoundTime);
 
+        log.info("$$$$ timePassed: {}, hashCount: {}, startRoundTime: " + Utils.df.format(new Date(startRoundTime)) , time, scanCount);
         scanCount = (int) ((9 * scanCount) + (scanCount / time * targetRoundTime)) / 10;
         log.info("$$$$ timePassed: {}, hashCount: {}, startRoundTime: " + Utils.df.format(new Date(startRoundTime)) , time, scanCount);
     }
@@ -103,11 +106,19 @@ public class BitcoinRPCService extends AbstractService implements Runnable {
         int accepted = 0, rejected = 0;
         long startTime = System.currentTimeMillis();
 
+        int requestCount = 0;
+
         try {
             do {
                 long startRoundTime = System.currentTimeMillis();
                 Work work = doGetWorkMessage(false);
+                requestCount++;
+
+                long hashStart = System.currentTimeMillis();
+                log.info("scan hash begin: " + Utils.df.format(new Date(hashStart)) + " scanCount: " + scanCount);
                 boolean found = sh.scan(work, 1, scanCount);
+                long hashEnd = System.currentTimeMillis();
+                log.info("scan hash end  : " + Utils.df.format(new Date(hashEnd)) + " scanCount: " + sh.getCount() + ", took (seconds): " + (hashEnd-hashStart)/1000.0 + ", found: " + found);
 
                 if (found) {
                     log.warn("found: " + work.data);
@@ -126,11 +137,17 @@ public class BitcoinRPCService extends AbstractService implements Runnable {
                     log.info("... H=" + sh.getCount() + ", A=" + accepted + ", R=" + rejected);
                 }
 
+                log.info("HAHA: requestCount="+requestCount);
+
             } while (timePassed(startTime) < targetTotalTime);
 
-            log.info("Times Up! startTime: {}, now: {}, targetTotalTime: " + targetTotalTime,
+            long endTime = System.currentTimeMillis();
+            double diff = (endTime - startTime) / 1000.0;
+
+            log.info("Times Up! startTime: {}, now: {}, diff: " + diff + ", targetTotalTime: " + targetTotalTime,
                     Utils.df.format(new Date(startTime)),
                     Utils.df.format(new Date(System.currentTimeMillis())));
+
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -155,7 +172,7 @@ public class BitcoinRPCService extends AbstractService implements Runnable {
         getWorkMessage.putArray("params");
         getWorkMessage.put("id", 1);
 
-        log.info("making jason rpc call: {} {}", longPoll, getWorkMessage);
+        log.info("making jason rpc call: {} {} time: " + Utils.df.format(new Date()), longPoll, getWorkMessage);
         JsonNode responseMessage = doJSONRPCCall(longPoll, getWorkMessage);
         //log.info("XXXX got getwork responseMessage: " + responseMessage);
 
@@ -180,8 +197,8 @@ public class BitcoinRPCService extends AbstractService implements Runnable {
             throw new IOException("Bitcoin returned unparsable JSON");
         }
 
-        log.info(String.format("got rpc response: data{%s}, midstate: {%s}, target: {%s}, hash1: {%s}",
-                datas, midstates, targets, hash1));
+        log.info(String.format("got rpc response: time: {%s} data{%s}, midstate: {%s}, target: {%s}, hash1: {%s}",
+                Utils.df.format(new Date()), datas, midstates, targets, hash1));
 
         Work work = new Work(datas, midstates, targets, hash1);
 
