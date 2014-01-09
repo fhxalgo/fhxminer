@@ -3,16 +3,15 @@ package com.fhx.bitcoin.miner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 /**
  * Created by George on 1/2/14.
  */
 public class Work {
     private static final Logger log = LoggerFactory.getLogger(Work.class);
 
-    public final int[] midstate = new int[8];
-    public final int[] data = new int[32];
-    public final int[] hash1 = new int[16];
-    public final long[] target = new long[8];
+    private AtomicLong hashCount = new AtomicLong(0);
 
     public  String dataText;
     public  String midstateText;
@@ -21,6 +20,11 @@ public class Work {
 
     long timestamp;
     long base;
+
+    public final int[] data = new int[32];
+    public final long[] target = new long[8];
+    public final int[] midstate = new int[8];
+    public final int[] hash1 = new int[16];
 
     public Work() {
         this.timestamp = System.nanoTime() / 1000000;
@@ -37,11 +41,18 @@ public class Work {
         this.base = 0;
     }
 
+    public long updateHashCount(long count) {
+        return hashCount.getAndAdd(count);
+    }
+
+    public long getHashCount() {
+        return hashCount.get();
+    }
+
     public boolean update(long delta) {
         boolean getWork = false;
 
         // base += delta;
-
         return getWork;
     }
 

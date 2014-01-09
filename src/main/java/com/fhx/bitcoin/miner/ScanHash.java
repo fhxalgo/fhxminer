@@ -33,7 +33,7 @@ public class ScanHash {
         log.info("xxxx data: " + Arrays.toString(_data));
         log.info("xxxx midstate: " + Arrays.toString(_midstate));
 
-        int[] __state, __data, __hash1, __hash;
+        int[] __state, __data=_data, __hash1, __hash;
         int mee = 0;
         for (int nonce = start; nonce < start + count; nonce++) {
             _data[3] = nonce; // NONCE is _data[3]
@@ -58,6 +58,9 @@ public class ScanHash {
                 return true;
             }
         }
+
+        // juar debug: see what's changed...
+        work.dataText = work.dataText.substring(0, 128) + encode(__data);
 
         log.info("meeeeeeeeeeeeeee or nonce: " + mee);
 

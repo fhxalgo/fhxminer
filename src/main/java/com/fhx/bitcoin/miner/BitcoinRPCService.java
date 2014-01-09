@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
+import com.lmax.disruptor.dsl.Disruptor;
 import org.apache.commons.codec.binary.Base64;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonProcessingException;
@@ -50,6 +51,9 @@ public class BitcoinRPCService extends AbstractService implements Runnable {
 
     private ExecutorService executor;
 
+    private Disruptor disruptor;
+    private WorkTranslator translator = new WorkTranslator();
+
     public BitcoinRPCService(String user, String pass, String urlStr) {
         this.user = user;
         this.pass = pass;
@@ -65,6 +69,19 @@ public class BitcoinRPCService extends AbstractService implements Runnable {
         this.executor = Executors.newCachedThreadPool();
     }
 
+    public void setDisruptor(Disruptor disruptor) {
+        this.disruptor = disruptor;
+    }
+
+    private void publish(Work work) {
+        if (disruptor != null) {
+            translator.setWork(work);
+            disruptor.publishEvent(translator);
+            log.info("published Work to disruptor service");
+        }
+    }
+
+
     @Override
     protected void doStart() {
         log.info("Starting Bitcoin RPC service...");
@@ -76,26 +93,6 @@ public class BitcoinRPCService extends AbstractService implements Runnable {
     protected void doStop() {
         log.info("Stopping Bitcoin RPC service...");
         notifyStopped();
-    }
-
-    protected static double timePassed(long start) {
-        long now = System.currentTimeMillis();
-        double tp = (now - start) / 1000.0;
-
-        log.info(" timePassed: start: " + Utils.df.format(new Date(start)) + ", now: " + Utils.df.format(new Date(now)) + " diff (seconds): " + tp);
-        if (tp < 0)
-            tp += 86400; // midnight
-
-        return tp;
-    }
-
-    private void adjustHashPerRound(long startRoundTime) {
-        log.info("adjusthashPerRound: " + Utils.df.format(new Date(startRoundTime)));
-        double time = timePassed(startRoundTime);
-
-        log.info("$$$$ timePassed: {}, hashCount: {}, startRoundTime: " + Utils.df.format(new Date(startRoundTime)) , time, scanCount);
-        scanCount = (int) ((9 * scanCount) + (scanCount / time * targetRoundTime)) / 10;
-        log.info("$$$$ timePassed: {}, hashCount: {}, startRoundTime: " + Utils.df.format(new Date(startRoundTime)) , time, scanCount);
     }
 
     @Override
@@ -114,11 +111,17 @@ public class BitcoinRPCService extends AbstractService implements Runnable {
                 Work work = doGetWorkMessage(false);
                 requestCount++;
 
+                // publish to disruptor
+                publish(work);
+                Thread.sleep(1000*5);
+
                 long hashStart = System.currentTimeMillis();
                 log.info("scan hash begin: " + Utils.df.format(new Date(hashStart)) + " scanCount: " + scanCount);
-                boolean found = sh.scan(work, 1, scanCount);
+                boolean found = false; //sh.scan(work, 1, scanCount);
                 long hashEnd = System.currentTimeMillis();
-                log.info("scan hash end  : " + Utils.df.format(new Date(hashEnd)) + " scanCount: " + sh.getCount() + ", took (seconds): " + (hashEnd-hashStart)/1000.0 + ", found: " + found);
+                log.info("scan hash enddd: " + Utils.df.format(new Date(hashEnd)) + " scanCount: " + sh.getCount() + ", took (seconds): " + (hashEnd-hashStart)/1000.0 + ", found: " + found);
+
+                log.info("HASH work.dataText: " + work.dataText);
 
                 if (found) {
                     log.warn("found: " + work.data);
@@ -158,6 +161,27 @@ public class BitcoinRPCService extends AbstractService implements Runnable {
 
         log.info("exiting...");
         System.exit(-1);
+    }
+
+
+    protected static double timePassed(long start) {
+        long now = System.currentTimeMillis();
+        double tp = (now - start) / 1000.0;
+
+        log.info(" timePassed: start: " + Utils.df.format(new Date(start)) + ", now: " + Utils.df.format(new Date(now)) + " diff (seconds): " + tp);
+        if (tp < 0)
+            tp += 86400; // midnight
+
+        return tp;
+    }
+
+    private void adjustHashPerRound(long startRoundTime) {
+        log.info("adjusthashPerRound: " + Utils.df.format(new Date(startRoundTime)));
+        double time = timePassed(startRoundTime);
+        int oldHashCount = scanCount;
+        log.info("$$$$ timePassed: {}, oldHashCount: {}, startRoundTime: " + Utils.df.format(new Date(startRoundTime)) , time, scanCount);
+        scanCount = (int) ((9 * scanCount) + (scanCount / time * targetRoundTime)) / 10;
+        log.info("$$$$ timePassed: {}, newHashCount: {}, nowwwwwwwwwwww: " + Utils.df.format(new Date(System.currentTimeMillis())) + ", DIFF: " + (scanCount-oldHashCount) , time, scanCount);
     }
 
     private void getWork() throws Exception {
