@@ -17,7 +17,12 @@ public class MinerEngine {
         System.out.println("setting config.properties: " + path);
         System.getProperties().setProperty("config.properties", path);
 
-        Injector injector = Guice.createInjector(new ConfigModule(), new MinerModule());
+        Injector injector = Guice.createInjector(
+                new ConfigModule(),
+                new MinerModule(),
+                new JettyServletModule(),
+                new SimonConsoleModule());
+
         ServiceManager serviceManager = new ServiceManager(ImmutableList.of(injector.getInstance(DisruptorService.class)));
         serviceManager.startAsync();
         serviceManager.awaitHealthy();

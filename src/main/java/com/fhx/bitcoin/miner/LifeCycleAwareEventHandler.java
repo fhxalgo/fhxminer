@@ -10,13 +10,13 @@ import java.util.Arrays;
 /**
  * Created by George on 1/8/14.
  */
-public abstract class LifeCycleAwareEventHandler<T> implements EventHandler<BlockEvent>, LifecycleAware {
+public abstract class LifeCycleAwareEventHandler<T> implements EventHandler<T>, LifecycleAware {
 
     public static final int MAX_TRY = 10;
     ThreadGroup rootThreadGroup = null;
 
-//    @Override
-//    public abstract void onEvent(T event, long sequence, boolean endOfBatch) throws Exception;
+    @Override
+    public abstract void onEvent(T event, long sequence, boolean endOfBatch) throws Exception;
 
     @Override
     public void onStart() {
@@ -31,6 +31,11 @@ public abstract class LifeCycleAwareEventHandler<T> implements EventHandler<Bloc
             }
             tryCount++;
         }
+    }
+
+    @Override
+    public void onShutdown() {
+
     }
 
     protected String getThreadName() {
@@ -83,11 +88,6 @@ public abstract class LifeCycleAwareEventHandler<T> implements EventHandler<Bloc
         }
 
         return null;
-    }
-
-    @Override
-    public void onShutdown() {
-
     }
 
 }

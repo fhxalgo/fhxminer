@@ -3,8 +3,6 @@ package com.fhx.bitcoin.miner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-
 import static com.fhx.bitcoin.miner.HexUtil.decode;
 import static com.fhx.bitcoin.miner.HexUtil.encode;
 
@@ -23,15 +21,15 @@ public class ScanHash {
     }
 
     public boolean scan(Work work, int start, int count) {
-        log.info("xxxx: work: start= " + start + ", count=" + count);
+        //log.info("xxxx: work: start= " + start + ", count=" + count);
         //log.info("timeeeeeeeeeeeeeeeeeeee: " + Utils.df.format(new Date()));
         SHA256 sha256 = new SHA256();
 
         int[] _data = decode(new int[16], work.dataText.substring(128));
         int[] _midstate = decode(decode(new int[16], work.hash1Text), work.midstateText);
 
-        log.info("xxxx data: " + Arrays.toString(_data));
-        log.info("xxxx midstate: " + Arrays.toString(_midstate));
+        //log.info("xxxx data: " + Arrays.toString(_data));
+        //log.info("xxxx midstate: " + Arrays.toString(_midstate));
 
         int[] __state, __data=_data, __hash1, __hash;
         int mee = 0;
@@ -62,7 +60,7 @@ public class ScanHash {
         // juar debug: see what's changed...
         work.dataText = work.dataText.substring(0, 128) + encode(__data);
 
-        log.info("meeeeeeeeeeeeeee or nonce: " + mee);
+        //log.info("meeeeeeeeeeeeeee or nonce: " + mee);
 
         return false;
     }

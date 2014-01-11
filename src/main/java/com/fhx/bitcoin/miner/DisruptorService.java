@@ -1,5 +1,6 @@
 package com.fhx.bitcoin.miner;
 
+import com.lmax.disruptor.AggregateEventHandler;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.dsl.Disruptor;
 import org.slf4j.Logger;
@@ -56,10 +57,21 @@ public class DisruptorService extends AbstractDisruptorService<BlockEvent> {
                 executorService
         );
 
-        disruptor.handleEventsWith(new InputHandler());
+        // input
+        InputHandler inputHandler = new InputHandler();
+        disruptor.handleEventsWith(inputHandler);
+
+        // processors
+        MinerHashHandler[] hashHandlers = new MinerHashHandler[hashThreads];
         for (int i=0; i<hashThreads; i++) {
-            disruptor.handleEventsWith(new MinerHashHandler(i, hashCount));
+            hashHandlers[i] = new MinerHashHandler(i, hashCount);
         }
+        AggregateEventHandler aggregateEventHandler = new AggregateEventHandler(hashHandlers);
+        disruptor.after(inputHandler).handleEventsWith(aggregateEventHandler);
+
+        // output
+        OutputHandler outputHandler = new OutputHandler();
+        disruptor.after(aggregateEventHandler).handleEventsWith(outputHandler);
 
         this.rpcService.setDisruptor(disruptor);
 

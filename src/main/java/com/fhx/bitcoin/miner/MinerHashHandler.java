@@ -1,5 +1,7 @@
 package com.fhx.bitcoin.miner;
 
+import org.javasimon.Split;
+import org.javasimon.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -8,6 +10,7 @@ import org.slf4j.LoggerFactory;
  */
 public class MinerHashHandler extends LifeCycleAwareEventHandler<BlockEvent> {
     private static final Logger log = LoggerFactory.getLogger(MinerHashHandler.class);
+    private final Stopwatch STOPWATCH = SimonUtils.getNumberedStopwatch("input.handler");
 
     private int id;
     private int count;
@@ -31,14 +34,21 @@ public class MinerHashHandler extends LifeCycleAwareEventHandler<BlockEvent> {
 
     @Override
     public void onEvent(BlockEvent event, long sequence, boolean endOfBatch) throws Exception {
-        log.info(String.format("ID: {%d}, event: {%s}, seq: {%d}, work: {%s}", id, event, sequence, event.getWork()));
+        Split split = STOPWATCH.start();
 
-        Work work = event.getWork();
-        if (work != null) {
-            genHash(work);
+        try {
+            log.info(String.format("ID: {%d}, event: {%s}, seq: {%d}, work: {%s}", id, event, sequence, event.getWork()));
+
+            Work work = event.getWork();
+            if (work != null) {
+                genHash(work);
+            }
+            else {
+                log.error("Invalid work: {}", work);
+            }
         }
-        else {
-            log.error("Invalid work: {}", work);
+        finally {
+            split.stop();
         }
     }
 
