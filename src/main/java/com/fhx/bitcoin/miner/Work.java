@@ -11,8 +11,6 @@ import java.util.concurrent.atomic.AtomicLong;
 public class Work {
     private static final Logger log = LoggerFactory.getLogger(Work.class);
 
-    private AtomicLong hashCount = new AtomicLong(0);
-
     public  String dataText;
     public  String midstateText;
     public  String targetText;
@@ -26,16 +24,13 @@ public class Work {
     public final int[] midstate = new int[8];
     public final int[] hash1 = new int[16];
 
-    public Work() {
-        this.timestamp = System.nanoTime() / 1000000;
-        this.base = 0;
-    }
+    private AtomicLong hashCount = new AtomicLong(0);
 
-    public Work(String data2, String midstate2, String target2, String hash2) {
-        this.dataText = data2;
-        this.midstateText = midstate2;
-        this.targetText = target2;
-        this.hash1Text = hash2;
+    public Work(String datas, String midstates, String targets, String hash1s) {
+        this.dataText = datas;
+        this.midstateText = midstates;
+        this.targetText = targets;
+        this.hash1Text = hash1s;
 
         this.timestamp = System.nanoTime() / 1000000;
         this.base = 0;
@@ -52,13 +47,14 @@ public class Work {
     public boolean update(long delta) {
         boolean getWork = false;
 
-        // base += delta;
+        base += delta;
         return getWork;
     }
 
     public void submitNonce(int nonce) {
         data[19] = nonce;
         //networkState.addSendQueue(this);
+        log.info("submitNonce: " + nonce);
     }
 
     public long getTimestamp() {
@@ -80,16 +76,20 @@ public class Work {
         data[n] = x;
     }
 
-    public int getMidstate(int n) {
-        return midstate[n];
-    }
-
     public int[] getMidstate() {
         return midstate;
     }
 
+    public int getMidstate(int n) {
+        return midstate[n];
+    }
+
     public void setMidstate(int n, int x) {
         midstate[n] = x;
+    }
+
+    public long[] getTarget() {
+        return target;
     }
 
     public long getTarget(int n) {

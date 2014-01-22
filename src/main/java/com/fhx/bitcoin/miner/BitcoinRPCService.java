@@ -77,10 +77,9 @@ public class BitcoinRPCService extends AbstractService implements Runnable {
         if (disruptor != null) {
             translator.setWork(work);
             disruptor.publishEvent(translator);
-            log.info("published Work to disruptor service");
+            log.info("published getWork to disruptor service");
         }
     }
-
 
     @Override
     protected void doStart() {
@@ -91,8 +90,8 @@ public class BitcoinRPCService extends AbstractService implements Runnable {
 
     @Override
     protected void doStop() {
-        log.info("Stopping Bitcoin RPC service...");
         notifyStopped();
+        log.info("Stopp Bitcoin RPC service");
     }
 
     @Override
@@ -103,25 +102,27 @@ public class BitcoinRPCService extends AbstractService implements Runnable {
         int accepted = 0, rejected = 0;
         long startTime = System.currentTimeMillis();
 
-        int requestCount = 0;
+        int getWorkCount = 0;
 
         try {
             do {
                 long startRoundTime = System.currentTimeMillis();
                 Work work = doGetWorkMessage(false);
-                requestCount++;
+                getWorkCount++;
+
+                log.info("HASH work.dataText: " + work.dataText);
 
                 // publish to disruptor
                 publish(work);
-                Thread.sleep(1000*5);
+                //Thread.sleep(250);
 
                 long hashStart = System.currentTimeMillis();
                 log.info("scan hash begin: " + Utils.df.format(new Date(hashStart)) + " scanCount: " + scanCount);
-                boolean found = false; //sh.scan(work, 1, scanCount);
+                //boolean found = false; //sh.scan(work, 1, scanCount);
+                boolean found = sh.scan(work, 1, scanCount);
                 long hashEnd = System.currentTimeMillis();
-                log.info("scan hash enddd: " + Utils.df.format(new Date(hashEnd)) + " scanCount: " + sh.getCount() + ", took (seconds): " + (hashEnd-hashStart)/1000.0 + ", found: " + found);
 
-                log.info("HASH work.dataText: " + work.dataText);
+                log.info("scan hash enddd: " + Utils.df.format(new Date(hashEnd)) + " scanCount: " + sh.getCount() + ", took (milliseconds): " + (hashEnd-hashStart) + ", found: " + found);
 
                 if (found) {
                     log.warn("found: " + work.data);
@@ -140,7 +141,7 @@ public class BitcoinRPCService extends AbstractService implements Runnable {
                     log.info("... H=" + sh.getCount() + ", A=" + accepted + ", R=" + rejected);
                 }
 
-                log.info("HAHA: requestCount="+requestCount);
+                log.info("HAHA: getWorkCount=" + getWorkCount);
 
             } while (timePassed(startTime) < targetTotalTime);
 
@@ -168,7 +169,7 @@ public class BitcoinRPCService extends AbstractService implements Runnable {
         long now = System.currentTimeMillis();
         double tp = (now - start) / 1000.0;
 
-        log.info(" timePassed: start: " + Utils.df.format(new Date(start)) + ", now: " + Utils.df.format(new Date(now)) + " diff (seconds): " + tp);
+        log.info(" timePassed: start: " + Utils.df.format(new Date(start)) + ", now: " + Utils.df.format(new Date(now)) + " passed (milliseconds): " + tp * 1000);
         if (tp < 0)
             tp += 86400; // midnight
 
@@ -176,17 +177,23 @@ public class BitcoinRPCService extends AbstractService implements Runnable {
     }
 
     private void adjustHashPerRound(long startRoundTime) {
-        log.info("adjusthashPerRound: " + Utils.df.format(new Date(startRoundTime)));
         double time = timePassed(startRoundTime);
         int oldHashCount = scanCount;
-        log.info("$$$$ timePassed: {}, oldHashCount: {}, startRoundTime: " + Utils.df.format(new Date(startRoundTime)) , time, scanCount);
         scanCount = (int) ((9 * scanCount) + (scanCount / time * targetRoundTime)) / 10;
-        log.info("$$$$ timePassed: {}, newHashCount: {}, nowwwwwwwwwwww: " + Utils.df.format(new Date(System.currentTimeMillis())) + ", DIFF: " + (scanCount-oldHashCount) , time, scanCount);
+
+        String info = String.format("startRoundTime: %s, now: %s, timePassed: %s milliseconds, oldHashCount: %d, scanCount: %d, DIFF: %s"
+                , Utils.df.format(new Date(startRoundTime)), Utils.df.format(new Date(System.currentTimeMillis()))
+                , time * 1000, oldHashCount, scanCount, (scanCount-oldHashCount));
+        log.info(info);
+        log.info("$$$$ hashRate: {} ", scanCount / (time*1000));
     }
 
-    private void getWork() throws Exception {
-        log.info("calling doGetWorkMessage...");
-
+    public void printJsonResponse(JsonNode responseMessage) {
+        Iterator<String> it = responseMessage.getFieldNames();
+        while(it.hasNext()) {
+            String fn = it.next();
+            log.info(fn + ": " + responseMessage.get(fn));
+        }
     }
 
     private Work doGetWorkMessage(boolean longPoll) throws IOException {
@@ -199,12 +206,7 @@ public class BitcoinRPCService extends AbstractService implements Runnable {
         log.info("making jason rpc call: {} {} time: " + Utils.df.format(new Date()), longPoll, getWorkMessage);
         JsonNode responseMessage = doJSONRPCCall(longPoll, getWorkMessage);
         //log.info("XXXX got getwork responseMessage: " + responseMessage);
-
-//        Iterator<String> it = responseMessage.getFieldNames();
-//        while(it.hasNext()) {
-//            String fn = it.next();
-//            log.info(fn + ": " + responseMessage.get(fn));
-//        }
+        //printJsonResponse(responseMessage);
 
         String datas;
         String midstates;
@@ -499,6 +501,12 @@ public class BitcoinRPCService extends AbstractService implements Runnable {
 
     }
 
+    private static void startSingletonServices(Service... services) {
+        ServiceManager serviceManager = new ServiceManager(ImmutableList.copyOf(services));
+        serviceManager.startAsync();
+        serviceManager.awaitHealthy();
+    }
+
     public static void main(String[] args) {
         String path = BitcoinRPCService.class.getClassLoader().getResource("config.properties").getFile();
         System.out.println("setting config.properties=" + path);
@@ -544,7 +552,7 @@ public class BitcoinRPCService extends AbstractService implements Runnable {
 
         // http://gfeng:br001klyn@localhost:18332
         final String user = properties.getProperty("user");
-        final String password = properties.getProperty("pass");
+        final String password = properties.getProperty("password");
         final String urlStr = properties.getProperty("url");
 
         BitcoinRPCService rpcService = new BitcoinRPCService(user, password, urlStr);
@@ -552,9 +560,4 @@ public class BitcoinRPCService extends AbstractService implements Runnable {
 
     }
 
-    private static void startSingletonServices(Service... services) {
-        ServiceManager serviceManager = new ServiceManager(ImmutableList.copyOf(services));
-        serviceManager.startAsync();
-        serviceManager.awaitHealthy();
-    }
 }

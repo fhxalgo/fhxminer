@@ -9,4 +9,8 @@ import java.text.SimpleDateFormat;
 public interface Utils {
 
     public static final DateFormat df = new SimpleDateFormat("HH:mm:ss.S");
+
+    public static final DateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss.S");
+    //public static final String now = df.format(new Date());
+
 }

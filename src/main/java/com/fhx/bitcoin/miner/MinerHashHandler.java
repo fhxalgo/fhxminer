@@ -56,10 +56,16 @@ public class MinerHashHandler extends LifeCycleAwareEventHandler<BlockEvent> {
         long ST = System.currentTimeMillis();
         boolean found = sh.scan(work, id*count+1, count);
         long hashes = sh.getCount();
+        work.updateHashCount(hashes);
         long ET = System.currentTimeMillis();
+        double took = (ET - ST)/1000.0;
 
-//        log.info(String.format("HASH [%s] done for %s , took %s, CumHash: %s"
-//                , id, hashes, (ET - ST)/1000.0), work.updateHashCount(hashes));
+        if (found) {
+            log.info("$$$$ found: {} " + work.data);
+        }
+
+        log.info("HASH {} done in {} seconds, rate [{} Kh/s], TOTAL: {} X" , new Object[]{ hashes, took, (hashes/took)/1000.0
+                , work.getHashCount() });
     }
 
 }

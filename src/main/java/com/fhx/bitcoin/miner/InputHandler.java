@@ -5,6 +5,8 @@ import org.javasimon.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
+
 /**
  * Created by George on 1/9/14.
  */
@@ -31,10 +33,11 @@ public class InputHandler extends LifeCycleAwareEventHandler<BlockEvent> {
         Split split = STOPWATCH.start();
 
         try {
-        Work work = event.getWork();
-        log.info(String.format("InputHandler: {%s}, seq: {%s}, work: [data:{%s}, target:{%s}] "
+            Work work = event.getWork();
+            log.info(String.format("InputHandler: {%s}, seq: {%s}, work: [data:{%s}, target:{%s}] "
                 , event, sequence, work.dataText, work.targetText));
 
+            log.info("target: " + Arrays.toString(work.getTarget()));
         }
         finally {
             split.stop();

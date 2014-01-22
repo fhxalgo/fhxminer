@@ -391,13 +391,14 @@ public class GPUDeviceState extends DeviceState {
 				}
 
                 //String wrkState = String.format("workState data: %s, timestatmp: %s", Arrays.toString(workState.getData()), Utils.df.format(new Date(workState.getTimestamp())));
-                String wrkState = String.format("workState data: %s, midstate: %s, target: %s, timestatmp: %s",
+                String wrkState = String.format(" timestatmp: %s, data: %s, target: %s ",
+                        Utils.df.format(new Date(workState.getTimestamp())),
                         workState.getData()[workState.getData().length-1],
-                        Arrays.toString(workState.getMidstate()),
-                        Arrays.toString(workState.target),
-                        Utils.df.format(new Date(workState.getTimestamp())));
+                        //Arrays.toString(workState.getMidstate()),
+                        Arrays.toString(workState.target)
+                        );
 
-                log.info("$$$$ calling GPU with workState: " + wrkState);
+                log.info("$$$$ call GPU: " + wrkState);
 
 				if(!skipProcessing | !skipUnmap) {
 					for(int z = 0; z < OUTPUTS; z++) {
@@ -462,7 +463,7 @@ public class GPUDeviceState extends DeviceState {
 				}
 
 				if(!requestedNewWork) {
-                    log.info("%%%% hash count: {}, runs: {} ", deviceHashCount.get(), runs.get());
+                    log.info("%%%% device: " + deviceName + " hash count: {}, runs: {} ", deviceHashCount.get(), runs.get());
 					diabloMiner.addAndGetHashCount(increment);
 					deviceHashCount.addAndGet(increment);
 					runs.incrementAndGet();

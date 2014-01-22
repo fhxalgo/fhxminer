@@ -57,7 +57,10 @@ public class WorkState {
 		boolean getWork;
 
 		if((DiabloMiner.now() - timestamp) + 1000 >= networkState.getWorkLifetime()) {
-			diabloMiner.debug(executionState.getExecutionName() + ": Refresh work: work expired, workLifetime: " + networkState.getWorkLifetime());
+			diabloMiner.debug(executionState.getExecutionName() + ": Refresh work: work expired, workLifetime: "
+                    + networkState.getWorkLifetime()
+                    + ", timestamp: " + Utils.DATE_FORMAT.format(new Date(timestamp))
+                    + ", now: " + Utils.DATE_FORMAT.format(new Date(DiabloMiner.now())));
 			getWork = true;
 		} else if(networkState.getRefreshTimestamp() > timestamp) {
 			diabloMiner.debug(executionState.getExecutionName() + ": Refresh work: longpoll");
@@ -78,7 +81,8 @@ public class WorkState {
 			getWork = false;
 		}
 
-        log.info(String.format("XXXX update() delta: %d, timestamp: %s, getWork: %s ", delta, Utils.df.format(new Date(timestamp)), getWork));
+        log.info(String.format("XXXX update() base: %d, delta: %d, timestamp: %s, getWork: %s, rolledNTime: %d "
+                , base, delta, Utils.df.format(new Date(timestamp)), getWork, rolledNTime));
 
         if(getWork) {
 			networkState.addGetQueue(executionState);

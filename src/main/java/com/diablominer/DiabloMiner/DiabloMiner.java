@@ -385,7 +385,10 @@ public class DiabloMiner {
 
 			} else {
 				//System.out.print("\rWaiting...");
-                log.info("Waiting... startTime: {}, now: {}", Utils.df.format(new Date(startTime)), Utils.df.format(new Date(now)) );
+                //log.info("Waiting... startTime: {}, now: {}, diff: " + (now - startTime)/1000.0, Utils.df.format(new Date(startTime)), Utils.df.format(new Date(now)) );
+                String printStr = String.format("\r%s [XXX] DiabloMiner.execute() Waiting... startTime: {%s}, diff: " + (now - startTime)/1000.0, Utils.df.format(new Date(System.currentTimeMillis())), Utils.df.format(new Date(startTime/1000)));
+                //System.out.println(printStr);
+                log.info(printStr);
 			}
 
 			if(now() - TIME_OFFSET * 2 > previousAdjustedStartTime) {

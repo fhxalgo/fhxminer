@@ -4,11 +4,13 @@ package com.fhx.bitcoin.miner;
  * Created by George on 1/2/14.
  */
 public class SHA256 {
+    private final int[] X = new int[64];
+
     public static int[] initState() {
-                /*
-                 * SHA-256 initial hash value The first 32 bits of the fractional parts
-                 * of the square roots of the first eight prime numbers
-                 */
+        /*
+         SHA-256 initial hash value The first 32 bits of the fractional parts
+         of the square roots of the first eight prime numbers
+         */
         int[] state = new int[8];
 
         state[0] = 0x6a09e667;
@@ -23,14 +25,10 @@ public class SHA256 {
         return state;
     }
 
-    private final int[] X = new int[64];
-
     public synchronized void processBlock(int[] state, int[] input) {
         System.arraycopy(input, 0, X, 0, 16);
 
-        //
         // expand 16 word block into 64 word blocks.
-        //
         for (int t = 16; t <= 63; t++) {
             int x = X[t - 15];
             int x1 = X[t - 2];
@@ -40,9 +38,7 @@ public class SHA256 {
                     + X[t - 16];
         }
 
-        //
         // set up working variables.
-        //
         int a = state[0];
         int b = state[1];
         int c = state[2];

@@ -37,6 +37,7 @@ public class OutputHandler extends LifeCycleAwareEventHandler<BlockEvent> {
 
         }
         finally {
+            event.reset();
             split.stop();
         }
     }

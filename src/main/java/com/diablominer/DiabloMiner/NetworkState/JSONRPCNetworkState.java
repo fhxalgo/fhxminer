@@ -34,10 +34,13 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
+import java.util.Date;
 import java.util.Formatter;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
+
+import static com.diablominer.DiabloMiner.Utils.DATE_FORMAT;
 
 public class JSONRPCNetworkState extends NetworkState {
     private static final Logger log = LoggerFactory.getLogger(JSONRPCNetworkState.class);
@@ -446,7 +449,7 @@ public class JSONRPCNetworkState extends NetworkState {
 
 					workState.setExecutionState(executionState);
                     // publish to disruptor
-                    log.info("GOT NEW workState for GPU processing: " + workState);
+                    log.info("GOT NEW workState for GPU processing: " + DATE_FORMAT.format(new Date(workState.getTimestamp())));
 					executionState.addIncomingQueue(workState);
 				}
 			}
